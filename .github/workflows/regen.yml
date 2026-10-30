@@ -11,10 +11,11 @@ permissions:
 
 jobs:
   regen:
-    uses: pitchmentor/.github/.github/workflows/regen.yml@b8e5f0af1f83f377395b80a33d9320176bd45179 # v1
+    uses: pitchmentor/.github/.github/workflows/regen.yml@a6abeaf7d14428db807abd67280d834aab7aaae3 # v1
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     with:
       language: go
       check: go vet ./... && go test ./...
