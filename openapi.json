@@ -1,0 +1,6317 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pitch Mentor API",
+    "version": "1.0.0",
+    "description": "Public API for Pitch Mentor. Authenticate with a team API key (`Authorization: Bearer pm_live_…` or `X-API-Key`). Lists use cursor pagination (`limit`, `cursor` → `{data, has_more, next_cursor}`); errors are `{error:{code,message}}`. Webhooks are signed per Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature: v1,<base64 HMAC-SHA256>`)."
+  },
+  "servers": [
+    {
+      "url": "https://api.pitchmentor.net"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "apiKeyHeader": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account"
+    },
+    {
+      "name": "Calls"
+    },
+    {
+      "name": "Analytics"
+    },
+    {
+      "name": "Leads"
+    },
+    {
+      "name": "Team"
+    },
+    {
+      "name": "Coaching"
+    },
+    {
+      "name": "Billing"
+    },
+    {
+      "name": "Referrals"
+    },
+    {
+      "name": "Webhooks"
+    },
+    {
+      "name": "API Keys"
+    },
+    {
+      "name": "Meta"
+    }
+  ],
+  "paths": {
+    "/v1/me": {
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "Account"
+        ],
+        "summary": "The team and API key making the request",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/calls": {
+      "get": {
+        "operationId": "listCalls",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "List calls (newest first)",
+        "description": "Requires scope `calls:read`.",
+        "x-required-scope": "calls:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "calls:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "calls:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "`next_cursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "today",
+                "7d",
+                "30d",
+                "90d",
+                "all"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Start day (YYYY-MM-DD); overrides period",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "End day (YYYY-MM-DD), inclusive",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "query",
+            "required": false,
+            "description": "Only calls by this team member",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "description": "List archived calls instead",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Call"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/calls/export": {
+      "get": {
+        "operationId": "exportCalls",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Export calls as CSV or JSON",
+        "description": "Requires scope `calls:read`.",
+        "x-required-scope": "calls:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "calls:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "calls:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "csv",
+                "json"
+              ],
+              "default": "csv"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "ISO date or date-time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "ISO date or date-time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "call_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "set",
+                "closer"
+              ]
+            }
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Call"
+                      }
+                    }
+                  }
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/calls/{id}": {
+      "get": {
+        "operationId": "getCall",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Get a call with transcript and coaching log",
+        "description": "Requires scope `calls:read`.",
+        "x-required-scope": "calls:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "calls:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "calls:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/calls/{id}/summary": {
+      "post": {
+        "operationId": "summarizeCall",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Generate (or return the existing) AI summary",
+        "description": "Generating a new summary uses the team's token quota.\n\nRequires scope `calls:write`.",
+        "x-required-scope": "calls:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "calls:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "calls:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/calls/{id}/archive": {
+      "post": {
+        "operationId": "archiveCall",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Archive a call (hidden from history and analytics, not deleted)",
+        "description": "Requires scope `calls:write`.",
+        "x-required-scope": "calls:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "calls:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "calls:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallArchiveState"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/calls/{id}/unarchive": {
+      "post": {
+        "operationId": "unarchiveCall",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Restore an archived call",
+        "description": "Requires scope `calls:write`.",
+        "x-required-scope": "calls:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "calls:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "calls:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallArchiveState"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/analytics/overview": {
+      "get": {
+        "operationId": "getAnalyticsOverview",
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Team call analytics",
+        "description": "Requires scope `analytics:read`.",
+        "x-required-scope": "analytics:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "analytics:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "analytics:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "Single local day (YYYY-MM-DD); returns 15-minute buckets",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "tz",
+            "in": "query",
+            "required": false,
+            "description": "Timezone offset in minutes (as JS getTimezoneOffset)",
+            "schema": {
+              "type": "integer",
+              "minimum": -720,
+              "maximum": 720
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "description": "Only this team member",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/analytics/users": {
+      "get": {
+        "operationId": "getAnalyticsByMember",
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Per-member call stats",
+        "description": "Requires scope `analytics:read`.",
+        "x-required-scope": "analytics:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "analytics:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "analytics:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "Single local day (YYYY-MM-DD); returns 15-minute buckets",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          {
+            "name": "tz",
+            "in": "query",
+            "required": false,
+            "description": "Timezone offset in minutes (as JS getTimezoneOffset)",
+            "schema": {
+              "type": "integer",
+              "minimum": -720,
+              "maximum": 720
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsUsers"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/leads": {
+      "get": {
+        "operationId": "listLeads",
+        "tags": [
+          "Leads"
+        ],
+        "summary": "List leads (newest first)",
+        "description": "Requires scope `leads:read`.",
+        "x-required-scope": "leads:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "leads:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "leads:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "`next_cursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Name, email, company or phone digits",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Lead"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "upsertLead",
+        "tags": [
+          "Leads"
+        ],
+        "summary": "Create a lead, or update the one with the same externalId",
+        "description": "Requires scope `leads:write`.",
+        "x-required-scope": "leads:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "leads:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "leads:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "externalId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "ID in your CRM; POST upserts on it"
+                  },
+                  "source": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "company": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "stage": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "In cents"
+                  },
+                  "description": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "content"
+                      ],
+                      "properties": {
+                        "content": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadUpsertResult"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadUpsertResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/leads/batch": {
+      "post": {
+        "operationId": "batchUpsertLeads",
+        "tags": [
+          "Leads"
+        ],
+        "summary": "Import up to 100 leads (upsert on externalId; omitted fields are cleared on update)",
+        "description": "Requires scope `leads:write`.",
+        "x-required-scope": "leads:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "leads:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "leads:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "leads"
+                ],
+                "properties": {
+                  "leads": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "externalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "ID in your CRM; POST upserts on it"
+                        },
+                        "source": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "phone": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "email": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "company": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "stage": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "In cents"
+                        },
+                        "description": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "notes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "content"
+                            ],
+                            "properties": {
+                              "content": {
+                                "type": "string"
+                              },
+                              "author": {
+                                "type": "string"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          }
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadBatchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/leads/{id}": {
+      "get": {
+        "operationId": "getLead",
+        "tags": [
+          "Leads"
+        ],
+        "summary": "Get a lead",
+        "description": "Requires scope `leads:read`.",
+        "x-required-scope": "leads:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "leads:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "leads:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lead"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateLead",
+        "tags": [
+          "Leads"
+        ],
+        "summary": "Update a lead (only provided fields change)",
+        "description": "Requires scope `leads:write`.",
+        "x-required-scope": "leads:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "leads:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "leads:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "externalId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "ID in your CRM; POST upserts on it"
+                  },
+                  "source": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "phone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "company": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "stage": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "In cents"
+                  },
+                  "description": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "content"
+                      ],
+                      "properties": {
+                        "content": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lead"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/team": {
+      "get": {
+        "operationId": "getTeamConfig",
+        "tags": [
+          "Team"
+        ],
+        "summary": "Team settings and coaching context",
+        "description": "Requires scope `team:read`.",
+        "x-required-scope": "team:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "team:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamConfig"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateTeamConfig",
+        "tags": [
+          "Team"
+        ],
+        "summary": "Update team settings",
+        "description": "Requires scope `team:write`.",
+        "x-required-scope": "team:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "team:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:write"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "companyDescription": {
+                    "type": "string"
+                  },
+                  "productsServices": {
+                    "type": "string"
+                  },
+                  "idealCustomerProfile": {
+                    "type": "string"
+                  },
+                  "commonObjections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "toneGuidelines": {
+                    "type": "string"
+                  },
+                  "customPromptAdditions": {
+                    "type": "string"
+                  },
+                  "coachingStyleId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "objectionHandlers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "objection",
+                        "handler"
+                      ],
+                      "properties": {
+                        "objection": {
+                          "type": "string"
+                        },
+                        "handler": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "setGoals": {
+                    "type": "string"
+                  },
+                  "closerGoals": {
+                    "type": "string"
+                  },
+                  "competitors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "weaknesses": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "industry": {
+                    "type": "string"
+                  },
+                  "crmBaseUrl": {
+                    "type": "string"
+                  },
+                  "crmSessionCookie": {
+                    "type": "string",
+                    "description": "Write-only; stored encrypted"
+                  },
+                  "settingsLocked": {
+                    "type": "boolean"
+                  },
+                  "styleLocked": {
+                    "type": "boolean"
+                  },
+                  "discordBotToken": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Write-only"
+                  },
+                  "discordClientId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamConfig"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/team/members": {
+      "get": {
+        "operationId": "listMembers",
+        "tags": [
+          "Team"
+        ],
+        "summary": "List team members",
+        "description": "Requires scope `team:read`.",
+        "x-required-scope": "team:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "team:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Member"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/team/members/{id}": {
+      "delete": {
+        "operationId": "removeMember",
+        "tags": [
+          "Team"
+        ],
+        "summary": "Remove a member from the team",
+        "description": "The member keeps their account and calls; managers can't be removed via the API.\n\nRequires scope `team:write`.",
+        "x-required-scope": "team:write",
+        "x-destructive": true,
+        "security": [
+          {
+            "bearerAuth": [
+              "team:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/team/invites": {
+      "get": {
+        "operationId": "listInvites",
+        "tags": [
+          "Team"
+        ],
+        "summary": "List pending invites",
+        "description": "Requires scope `team:read`.",
+        "x-required-scope": "team:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "team:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Invite"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createInvite",
+        "tags": [
+          "Team"
+        ],
+        "summary": "Create an invite link (counts against the seat limit)",
+        "description": "Requires scope `team:write`.",
+        "x-required-scope": "team:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "team:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invite"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/team/invites/{id}": {
+      "delete": {
+        "operationId": "cancelInvite",
+        "tags": [
+          "Team"
+        ],
+        "summary": "Cancel a pending invite",
+        "description": "Requires scope `team:write`.",
+        "x-required-scope": "team:write",
+        "x-destructive": true,
+        "security": [
+          {
+            "bearerAuth": [
+              "team:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "team:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/coaching/styles": {
+      "get": {
+        "operationId": "listCoachingStyles",
+        "tags": [
+          "Coaching"
+        ],
+        "summary": "Built-in and team coaching styles",
+        "description": "Requires scope `coaching:read`.",
+        "x-required-scope": "coaching:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "coaching:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "coaching:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CoachingStyle"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCoachingStyle",
+        "tags": [
+          "Coaching"
+        ],
+        "summary": "Create a custom coaching style (Premium/Enterprise)",
+        "description": "Requires scope `coaching:write`.",
+        "x-required-scope": "coaching:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "coaching:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "coaching:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "personalityPrompt": {
+                    "type": "string"
+                  },
+                  "toneDescriptor": {
+                    "type": "string"
+                  },
+                  "closingPhilosophy": {
+                    "type": "string"
+                  },
+                  "objectionStyle": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "personalityPrompt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachingStyle"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/coaching/styles/{id}": {
+      "patch": {
+        "operationId": "updateCoachingStyle",
+        "tags": [
+          "Coaching"
+        ],
+        "summary": "Update a custom coaching style",
+        "description": "Requires scope `coaching:write`.",
+        "x-required-scope": "coaching:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "coaching:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "coaching:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "personalityPrompt": {
+                    "type": "string"
+                  },
+                  "toneDescriptor": {
+                    "type": "string"
+                  },
+                  "closingPhilosophy": {
+                    "type": "string"
+                  },
+                  "objectionStyle": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachingStyle"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/billing/subscription": {
+      "get": {
+        "operationId": "getBillingStatus",
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Plan and subscription status",
+        "description": "Requires scope `billing:read`.",
+        "x-required-scope": "billing:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "billing:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "billing:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/billing/usage": {
+      "get": {
+        "operationId": "getUsage",
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Token and seat usage for the current period",
+        "description": "Requires scope `billing:read`.",
+        "x-required-scope": "billing:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "billing:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "billing:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/billing/usage/members": {
+      "get": {
+        "operationId": "listMemberUsage",
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Per-member usage for the current period",
+        "description": "Requires scope `billing:read`.",
+        "x-required-scope": "billing:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "billing:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "billing:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MemberUsage"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/referrals": {
+      "get": {
+        "operationId": "getReferralStats",
+        "tags": [
+          "Referrals"
+        ],
+        "summary": "Referral link and stats",
+        "description": "Requires scope `referrals:read`.",
+        "x-required-scope": "referrals:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "referrals:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "referrals:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Referrals"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/api-keys": {
+      "get": {
+        "operationId": "listApiKeys",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "List API keys (including revoked)",
+        "description": "Requires scope `api_keys:read`.",
+        "x-required-scope": "api_keys:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "api_keys:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "api_keys:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "`next_cursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ApiKey"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApiKey",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Create an API key (the key is returned once)",
+        "description": "Requires scope `api_keys:write`.",
+        "x-required-scope": "api_keys:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "api_keys:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "api_keys:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "scopes"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "scopes": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "calls:read",
+                        "calls:write",
+                        "analytics:read",
+                        "leads:read",
+                        "leads:write",
+                        "team:read",
+                        "team:write",
+                        "coaching:read",
+                        "coaching:write",
+                        "billing:read",
+                        "referrals:read",
+                        "webhooks:read",
+                        "webhooks:write",
+                        "api_keys:read",
+                        "api_keys:write",
+                        "admin"
+                      ]
+                    }
+                  },
+                  "expiresAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time",
+                    "description": "Omit or null for no expiry"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/api-keys/{id}/rotate": {
+      "post": {
+        "operationId": "rotateApiKey",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Replace the key's secret (the old secret stops working immediately)",
+        "description": "Requires scope `api_keys:write`.",
+        "x-required-scope": "api_keys:write",
+        "x-destructive": true,
+        "security": [
+          {
+            "bearerAuth": [
+              "api_keys:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "api_keys:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/api-keys/{id}/revoke": {
+      "post": {
+        "operationId": "revokeApiKey",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Revoke an API key",
+        "description": "Requires scope `api_keys:write`.",
+        "x-required-scope": "api_keys:write",
+        "x-destructive": true,
+        "security": [
+          {
+            "bearerAuth": [
+              "api_keys:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "api_keys:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKey"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "operationId": "listWebhookEndpoints",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List webhook endpoints",
+        "description": "Requires scope `webhooks:read`.",
+        "x-required-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "`next_cursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookEndpoint"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWebhookEndpoint",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Add a webhook endpoint (the signing secret is returned once)",
+        "description": "Requires scope `webhooks:write`.",
+        "x-required-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "events"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "description": "Public https URL"
+                  },
+                  "events": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "call.completed",
+                        "call.archived",
+                        "call.unarchived",
+                        "lead.created",
+                        "lead.updated",
+                        "member.joined",
+                        "subscription.updated"
+                      ]
+                    }
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "get": {
+        "operationId": "getWebhookEndpoint",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Get a webhook endpoint",
+        "description": "Requires scope `webhooks:read`.",
+        "x-required-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateWebhookEndpoint",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Update, disable or re-enable a webhook endpoint",
+        "description": "Requires scope `webhooks:write`.",
+        "x-required-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "events": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "call.completed",
+                        "call.archived",
+                        "call.unarchived",
+                        "lead.created",
+                        "lead.updated",
+                        "member.joined",
+                        "subscription.updated"
+                      ]
+                    }
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhookEndpoint",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Delete a webhook endpoint and its delivery log",
+        "description": "Requires scope `webhooks:write`.",
+        "x-required-scope": "webhooks:write",
+        "x-destructive": true,
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/rotate-secret": {
+      "post": {
+        "operationId": "rotateWebhookSecret",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Replace the signing secret (returned once; takes effect immediately)",
+        "description": "Requires scope `webhooks:write`.",
+        "x-required-scope": "webhooks:write",
+        "x-destructive": true,
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/test": {
+      "post": {
+        "operationId": "testWebhookEndpoint",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Send a signed webhook.test event now and return the delivery result",
+        "description": "Requires scope `webhooks:write`.",
+        "x-required-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDelivery"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/deliveries": {
+      "get": {
+        "operationId": "listWebhookDeliveries",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Delivery log for an endpoint (newest first)",
+        "description": "Requires scope `webhooks:read`.",
+        "x-required-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:read"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "`next_cursor` from the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "succeeded",
+                "failed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookDelivery"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/deliveries/{deliveryId}/replay": {
+      "post": {
+        "operationId": "replayWebhookDelivery",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Queue the same message again (same webhook-id, new delivery record)",
+        "description": "Requires scope `webhooks:write`.",
+        "x-required-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": [
+              "webhooks:write"
+            ]
+          },
+          {
+            "apiKeyHeader": [
+              "webhooks:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Retry-safe key; the first response is replayed for 24h",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDelivery"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "5XX": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "operationId": "getOpenApi",
+        "tags": [
+          "Meta"
+        ],
+        "summary": "This OpenAPI document",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "pm_live_…",
+        "description": "Team API key"
+      },
+      "apiKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Team API key"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Me": {
+        "type": "object",
+        "required": [
+          "team",
+          "apiKey"
+        ],
+        "properties": {
+          "team": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "apiKey": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "scopes"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Call": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "endedAt",
+          "duration",
+          "platform",
+          "callType",
+          "prospectName",
+          "prospectPhone",
+          "prospectCompany",
+          "totalCoachingSuggestions",
+          "objectionsDetected",
+          "outcome",
+          "callSummary",
+          "tokensUsed",
+          "callScore",
+          "talkRatio",
+          "archivedAt",
+          "userId",
+          "userName",
+          "userPicture"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "duration": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectPhone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectCompany": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalCoachingSuggestions": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "objectionsDetected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tokensUsed": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "callScore": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "talkRatio": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "userPicture": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CallCompletedData": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "endedAt",
+          "duration",
+          "platform",
+          "callType",
+          "prospectName",
+          "prospectPhone",
+          "prospectCompany",
+          "totalCoachingSuggestions",
+          "objectionsDetected",
+          "outcome",
+          "callSummary",
+          "tokensUsed",
+          "callScore",
+          "talkRatio",
+          "archivedAt",
+          "userId",
+          "teamId",
+          "crmLeadId",
+          "crmClientId",
+          "repTalkTime",
+          "customerTalkTime"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "duration": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectPhone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectCompany": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalCoachingSuggestions": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "objectionsDetected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tokensUsed": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "callScore": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "talkRatio": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "crmLeadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "crmClientId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repTalkTime": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "customerTalkTime": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "description": "The call record without the transcript (fetch it with GET /v1/calls/{id})"
+      },
+      "CallRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "endedAt",
+          "duration",
+          "platform",
+          "callType",
+          "prospectName",
+          "prospectPhone",
+          "prospectCompany",
+          "totalCoachingSuggestions",
+          "objectionsDetected",
+          "outcome",
+          "callSummary",
+          "tokensUsed",
+          "callScore",
+          "talkRatio",
+          "archivedAt",
+          "userId",
+          "teamId",
+          "crmLeadId",
+          "crmClientId",
+          "repTalkTime",
+          "customerTalkTime",
+          "fullTranscript",
+          "structuredTranscript"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "duration": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectPhone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prospectCompany": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalCoachingSuggestions": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "objectionsDetected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tokensUsed": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "callScore": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "talkRatio": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "crmLeadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "crmClientId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repTalkTime": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "customerTalkTime": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "fullTranscript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "structuredTranscript": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "speaker",
+                "text",
+                "timestamp"
+              ],
+              "properties": {
+                "speaker": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CoachingLog": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "callRecordId",
+          "trigger",
+          "objectionType",
+          "detectedText",
+          "suggestedResponse",
+          "followUpQuestion",
+          "confidenceScore",
+          "priority",
+          "dismissed",
+          "usedByAgent"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "callRecordId": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "objectionType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detectedText": {
+            "type": "string"
+          },
+          "suggestedResponse": {
+            "type": "string"
+          },
+          "followUpQuestion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidenceScore": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "priority": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dismissed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "usedByAgent": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "CallDetail": {
+        "type": "object",
+        "required": [
+          "call",
+          "coachingLogs"
+        ],
+        "properties": {
+          "call": {
+            "$ref": "#/components/schemas/CallRecord"
+          },
+          "coachingLogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachingLog"
+            }
+          }
+        }
+      },
+      "CallArchiveState": {
+        "type": "object",
+        "required": [
+          "id",
+          "archivedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CallSummary": {
+        "type": "object",
+        "required": [
+          "summary",
+          "tokensUsed"
+        ],
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "tokensUsed": {
+            "type": "integer"
+          }
+        }
+      },
+      "AnalyticsOverview": {
+        "type": "object",
+        "required": [
+          "period",
+          "totalCalls",
+          "avgDuration",
+          "totalCoaching",
+          "avgCallScore",
+          "avgTalkRatio",
+          "callsPerDay",
+          "outcomes",
+          "callTypeSplit",
+          "objections",
+          "triggers",
+          "closeMetrics"
+        ],
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "totalCalls": {
+            "type": "integer"
+          },
+          "avgDuration": {
+            "type": "integer"
+          },
+          "totalCoaching": {
+            "type": "integer"
+          },
+          "avgCallScore": {
+            "type": "integer"
+          },
+          "avgTalkRatio": {
+            "type": "integer",
+            "description": "Percent of talk time by the rep"
+          },
+          "callsPerDay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "date",
+                "count"
+              ],
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "callsPerInterval": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "interval",
+                "count"
+              ],
+              "properties": {
+                "interval": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "outcome",
+                "count"
+              ],
+              "properties": {
+                "outcome": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "callTypeSplit": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "callType",
+                "count"
+              ],
+              "properties": {
+                "callType": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "objections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "objection",
+                "count"
+              ],
+              "properties": {
+                "objection": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "trigger",
+                "count"
+              ],
+              "properties": {
+                "trigger": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "closeMetrics": {
+            "type": "object",
+            "required": [
+              "totalCloses",
+              "callsWithClose",
+              "closeRate",
+              "avgTimeToClose",
+              "byType"
+            ],
+            "properties": {
+              "totalCloses": {
+                "type": "integer"
+              },
+              "callsWithClose": {
+                "type": "integer"
+              },
+              "closeRate": {
+                "type": "integer"
+              },
+              "avgTimeToClose": {
+                "type": "integer"
+              },
+              "byType": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "callType",
+                    "count"
+                  ],
+                  "properties": {
+                    "callType": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AnalyticsUsers": {
+        "type": "object",
+        "required": [
+          "period",
+          "users"
+        ],
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "userId",
+                "name",
+                "picture",
+                "totalCalls",
+                "avgDuration",
+                "coachingPerCall"
+              ],
+              "properties": {
+                "userId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "picture": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "totalCalls": {
+                  "type": "integer"
+                },
+                "avgDuration": {
+                  "type": "integer"
+                },
+                "coachingPerCall": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Lead": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt",
+          "teamId",
+          "externalId",
+          "source",
+          "name",
+          "phone",
+          "email",
+          "company",
+          "stage",
+          "value",
+          "description",
+          "notes",
+          "metadata"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "company": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "In cents"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "content"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "LeadUpsertResult": {
+        "type": "object",
+        "required": [
+          "lead",
+          "action"
+        ],
+        "properties": {
+          "lead": {
+            "$ref": "#/components/schemas/Lead"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "created",
+              "updated"
+            ]
+          }
+        }
+      },
+      "LeadBatchResult": {
+        "type": "object",
+        "required": [
+          "created",
+          "updated",
+          "total"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer"
+          },
+          "updated": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "TeamConfig": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "companyDescription": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productsServices": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "idealCustomerProfile": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "commonObjections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "toneGuidelines": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customPromptAdditions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coachingStyleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coachingStyleName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectionHandlers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "objection",
+                "handler"
+              ],
+              "properties": {
+                "objection": {
+                  "type": "string"
+                },
+                "handler": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "setGoals": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "closerGoals": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "competitors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "weaknesses"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "weaknesses": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "industry": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "crmBaseUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasCrmIntegration": {
+            "type": "boolean"
+          },
+          "settingsLocked": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "styleLocked": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "hasLogo": {
+            "type": "boolean"
+          },
+          "logoUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hasDiscord": {
+            "type": "boolean"
+          },
+          "discordClientId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "picture",
+          "isAdmin",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "picture": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isAdmin": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Invite": {
+        "type": "object",
+        "required": [
+          "id",
+          "token",
+          "createdAt",
+          "expiresAt",
+          "accepted"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "Join link: https://pitchmentor.net/invite?token=…"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accepted": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "CoachingStyle": {
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "isBuiltin"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isBuiltin": {
+            "type": "boolean"
+          },
+          "personalityPrompt": {
+            "type": "string"
+          },
+          "toneDescriptor": {
+            "type": "string"
+          },
+          "closingPhilosophy": {
+            "type": "string"
+          },
+          "objectionStyle": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "BillingStatus": {
+        "type": "object",
+        "required": [
+          "plan",
+          "status"
+        ],
+        "properties": {
+          "plan": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "trialEndsAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "currentPeriodStart": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "currentPeriodEnd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "stripeEnabled": {
+            "type": "boolean"
+          },
+          "seatLimit": {
+            "type": "integer"
+          },
+          "tokenLimit": {
+            "type": "integer"
+          },
+          "bonusCredits": {
+            "type": "integer"
+          },
+          "planName": {
+            "type": "string"
+          },
+          "planPrice": {
+            "type": "number"
+          },
+          "pendingPlan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "hasStripeSub": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "required": [
+          "tokensUsed",
+          "tokenLimit",
+          "callsUsed",
+          "seatsUsed",
+          "seatLimit",
+          "periodStart",
+          "periodEnd",
+          "percentUsed",
+          "isAtLimit",
+          "isWarning"
+        ],
+        "properties": {
+          "tokensUsed": {
+            "type": "integer"
+          },
+          "tokenLimit": {
+            "type": "integer"
+          },
+          "callsUsed": {
+            "type": "integer"
+          },
+          "seatsUsed": {
+            "type": "integer"
+          },
+          "seatLimit": {
+            "type": "integer"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "percentUsed": {
+            "type": "number"
+          },
+          "isAtLimit": {
+            "type": "boolean"
+          },
+          "isWarning": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MemberUsage": {
+        "type": "object",
+        "required": [
+          "userId",
+          "userName",
+          "userPicture",
+          "callCount",
+          "tokenCount"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "userPicture": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callCount": {
+            "type": "integer"
+          },
+          "tokenCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "Referrals": {
+        "type": "object",
+        "required": [
+          "referralCode",
+          "referralLink",
+          "totalReferrals",
+          "activeReferrals",
+          "lifetimeCreditsEarned"
+        ],
+        "properties": {
+          "referralCode": {
+            "type": "string"
+          },
+          "referralLink": {
+            "type": "string"
+          },
+          "totalReferrals": {
+            "type": "integer"
+          },
+          "activeReferrals": {
+            "type": "integer"
+          },
+          "lifetimeCreditsEarned": {
+            "type": "integer"
+          }
+        }
+      },
+      "ApiKey": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "scopes",
+          "createdAt",
+          "lastUsedAt",
+          "expiresAt",
+          "revoked",
+          "createdBy",
+          "createdByName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string",
+            "description": "First characters of the key, for recognition"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "calls:read",
+                "calls:write",
+                "analytics:read",
+                "leads:read",
+                "leads:write",
+                "team:read",
+                "team:write",
+                "coaching:read",
+                "coaching:write",
+                "billing:read",
+                "referrals:read",
+                "webhooks:read",
+                "webhooks:write",
+                "api_keys:read",
+                "api_keys:write",
+                "admin"
+              ]
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdByName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ApiKeyWithSecret": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiKey"
+          },
+          {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "The full key. Shown only once."
+              }
+            }
+          }
+        ]
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "description",
+          "events",
+          "active",
+          "failingSince",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "call.completed",
+                "call.archived",
+                "call.unarchived",
+                "lead.created",
+                "lead.updated",
+                "member.joined",
+                "subscription.updated"
+              ]
+            }
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "failingSince": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WebhookEndpointWithSecret": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEndpoint"
+          },
+          {
+            "type": "object",
+            "required": [
+              "secret"
+            ],
+            "properties": {
+              "secret": {
+                "type": "string",
+                "description": "whsec_… signing secret. Shown only once."
+              }
+            }
+          }
+        ]
+      },
+      "WebhookDelivery": {
+        "type": "object",
+        "required": [
+          "id",
+          "createdAt",
+          "endpointId",
+          "messageId",
+          "eventType",
+          "payload",
+          "status",
+          "attempts",
+          "nextAttemptAt",
+          "lastStatusCode",
+          "lastError",
+          "deliveredAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endpointId": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "string",
+            "description": "Sent as the webhook-id header; the same for replays"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "required": [
+              "type",
+              "timestamp",
+              "data"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "data": {}
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "succeeded",
+              "failed"
+            ]
+          },
+          "attempts": {
+            "type": "integer"
+          },
+          "nextAttemptAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastStatusCode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "lastError": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveredAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing, invalid, revoked or expired API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "API key lacks the required scope, or the action is not allowed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "A request with this Idempotency-Key is still in progress (`idempotency_in_progress`), or the resource is in a conflicting state (e.g. the API key is already revoked, or the team has no manager to send an invite from)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unprocessable": {
+        "description": "The Idempotency-Key was already used with a different request body (`idempotency_mismatch`)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Rate limited (600 requests/minute per key)",
+        "headers": {
+          "retry-after": {
+            "description": "Seconds until the current window resets",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "x-ratelimit-limit": {
+            "description": "Requests allowed per minute",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "x-ratelimit-remaining": {
+            "description": "Requests left in the current window",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "x-ratelimit-reset": {
+            "description": "Unix time (seconds) when the current window resets",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Server error. Retrying a POST with the same Idempotency-Key is safe: failed requests are not replayed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "call.completed": {
+      "post": {
+        "operationId": "webhook_call_completed",
+        "summary": "call.completed",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "call.completed"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CallCompletedData"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "call.archived": {
+      "post": {
+        "operationId": "webhook_call_archived",
+        "summary": "call.archived",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "call.archived"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CallArchiveState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "call.unarchived": {
+      "post": {
+        "operationId": "webhook_call_unarchived",
+        "summary": "call.unarchived",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "call.unarchived"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CallArchiveState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "lead.created": {
+      "post": {
+        "operationId": "webhook_lead_created",
+        "summary": "lead.created",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "lead.created"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/Lead"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "lead.updated": {
+      "post": {
+        "operationId": "webhook_lead_updated",
+        "summary": "lead.updated",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "lead.updated"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/Lead"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "member.joined": {
+      "post": {
+        "operationId": "webhook_member_joined",
+        "summary": "member.joined",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "member.joined"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name",
+                      "email",
+                      "joinedAt"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "joinedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "subscription.updated": {
+      "post": {
+        "operationId": "webhook_subscription_updated",
+        "summary": "subscription.updated",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "subscription.updated"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/BillingStatus"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    },
+    "webhook.test": {
+      "post": {
+        "operationId": "webhook_webhook_test",
+        "summary": "webhook.test",
+        "description": "Sent only by testWebhookEndpoint; endpoints can't subscribe to it.",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "timestamp",
+                  "data"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "webhook.test"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "endpointId",
+                      "message"
+                    ],
+                    "properties": {
+                      "endpointId": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return any 2xx to acknowledge"
+          }
+        }
+      }
+    }
+  }
+}

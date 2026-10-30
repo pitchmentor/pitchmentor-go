@@ -1,0 +1,20 @@
+name: Regen
+
+# Weekly: regenerate generated.go from the live OpenAPI spec and open a PR if it changed.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regen:
+    uses: pitchmentor/.github/.github/workflows/regen.yml@b8e5f0af1f83f377395b80a33d9320176bd45179 # v1
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      language: go
+      check: go vet ./... && go test ./...

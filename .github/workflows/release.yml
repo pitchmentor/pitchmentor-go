@@ -1,0 +1,41 @@
+name: Release
+
+# Push a vX.Y.Z tag matching Version in client.go: checks the version, tests, creates the GitHub Release and asks the
+# Go module proxy to fetch github.com/pitchmentor/pitchmentor-go@vX.Y.Z. Nothing is uploaded. Safe to re-run.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Tag matches the package version
+        run: scripts/check-version.sh "$GITHUB_REF_NAME"
+      - run: go vet ./...
+      - run: go test ./...
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then echo "Release $GITHUB_REF_NAME already exists"; exit 0; fi
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --generate-notes \
+            --notes "\`go get github.com/pitchmentor/pitchmentor-go@$GITHUB_REF_NAME\` · [pkg.go.dev](https://pkg.go.dev/github.com/pitchmentor/pitchmentor-go@$GITHUB_REF_NAME)"
+      - name: Warm the module proxy
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -fsS "https://proxy.golang.org/github.com/pitchmentor/pitchmentor-go/@v/$GITHUB_REF_NAME.info" && exit 0
+            sleep 15
+          done
+          echo "::warning::proxy.golang.org has not served $GITHUB_REF_NAME yet; it will on the first go get"

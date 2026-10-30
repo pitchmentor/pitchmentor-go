@@ -1,3 +1,3 @@
-module github.com/pitchmentor/sdk/go
+module github.com/pitchmentor/pitchmentor-go
 
 go 1.23
