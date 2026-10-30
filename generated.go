@@ -52,6 +52,32 @@ type Call struct {
 	UserPicture              *string    `json:"userPicture"`
 }
 
+type CallCompletedData struct {
+	ID                       string     `json:"id"`
+	CreatedAt                time.Time  `json:"createdAt"`
+	EndedAt                  *time.Time `json:"endedAt"`
+	Duration                 *int       `json:"duration"`
+	Platform                 *string    `json:"platform"`
+	CallType                 *string    `json:"callType"`
+	ProspectName             *string    `json:"prospectName"`
+	ProspectPhone            *string    `json:"prospectPhone"`
+	ProspectCompany          *string    `json:"prospectCompany"`
+	TotalCoachingSuggestions *int       `json:"totalCoachingSuggestions"`
+	ObjectionsDetected       []string   `json:"objectionsDetected"`
+	Outcome                  *string    `json:"outcome"`
+	CallSummary              *string    `json:"callSummary"`
+	TokensUsed               *int       `json:"tokensUsed"`
+	CallScore                *int       `json:"callScore"`
+	TalkRatio                *float64   `json:"talkRatio"`
+	ArchivedAt               *time.Time `json:"archivedAt"`
+	UserID                   string     `json:"userId"`
+	TeamID                   string     `json:"teamId"`
+	CrmLeadID                *string    `json:"crmLeadId"`
+	CrmClientID              *string    `json:"crmClientId"`
+	RepTalkTime              *int       `json:"repTalkTime"`
+	CustomerTalkTime         *int       `json:"customerTalkTime"`
+}
+
 type CallRecordStructuredTranscriptItem struct {
 	Speaker   string  `json:"speaker"`
 	Text      string  `json:"text"`
@@ -80,10 +106,10 @@ type CallRecord struct {
 	TeamID                   string                               `json:"teamId"`
 	CrmLeadID                *string                              `json:"crmLeadId"`
 	CrmClientID              *string                              `json:"crmClientId"`
-	FullTranscript           *string                              `json:"fullTranscript"`
-	StructuredTranscript     []CallRecordStructuredTranscriptItem `json:"structuredTranscript"`
 	RepTalkTime              *int                                 `json:"repTalkTime"`
 	CustomerTalkTime         *int                                 `json:"customerTalkTime"`
+	FullTranscript           *string                              `json:"fullTranscript"`
+	StructuredTranscript     []CallRecordStructuredTranscriptItem `json:"structuredTranscript"`
 }
 
 type CoachingLog struct {
@@ -192,9 +218,9 @@ type AnalyticsUsers struct {
 }
 
 type LeadNotesItem struct {
-	Content   string `json:"content"`
-	Author    string `json:"author"`
-	CreatedAt string `json:"createdAt"`
+	Content   string     `json:"content"`
+	Author    *string    `json:"author,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
 }
 
 type Lead struct {
@@ -407,9 +433,9 @@ type Success struct {
 }
 
 type UpsertLeadBodyNotesItem struct {
-	Content   string  `json:"content"`
-	Author    *string `json:"author,omitempty"`
-	CreatedAt *string `json:"createdAt,omitempty"`
+	Content   string     `json:"content"`
+	Author    *string    `json:"author,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
 }
 
 type UpsertLeadBody struct {
@@ -429,9 +455,9 @@ type UpsertLeadBody struct {
 }
 
 type BatchUpsertLeadsBodyLeadsItemNotesItem struct {
-	Content   string  `json:"content"`
-	Author    *string `json:"author,omitempty"`
-	CreatedAt *string `json:"createdAt,omitempty"`
+	Content   string     `json:"content"`
+	Author    *string    `json:"author,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
 }
 
 type BatchUpsertLeadsBodyLeadsItem struct {
@@ -455,9 +481,9 @@ type BatchUpsertLeadsBody struct {
 }
 
 type UpdateLeadBodyNotesItem struct {
-	Content   string  `json:"content"`
-	Author    *string `json:"author,omitempty"`
-	CreatedAt *string `json:"createdAt,omitempty"`
+	Content   string     `json:"content"`
+	Author    *string    `json:"author,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
 }
 
 type UpdateLeadBody struct {
@@ -1212,6 +1238,15 @@ func (c *Client) ListWebhookDeliveriesIter(ctx context.Context, id string, param
 func (c *Client) ReplayWebhookDelivery(ctx context.Context, id string, deliveryID string, opts ...RequestOption) (*WebhookDelivery, error) {
 	var out WebhookDelivery
 	if err := c.do(ctx, "POST", "/v1/webhooks/"+url.PathEscape(id)+"/deliveries/"+url.PathEscape(deliveryID)+"/replay", nil, nil, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetOpenApi calls GET /v1/openapi.json: This OpenAPI document.
+func (c *Client) GetOpenApi(ctx context.Context, opts ...RequestOption) (*map[string]any, error) {
+	var out map[string]any
+	if err := c.do(ctx, "GET", "/v1/openapi.json", nil, nil, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
