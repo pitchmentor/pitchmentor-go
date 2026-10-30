@@ -502,31 +502,31 @@ type UpdateLeadBody struct {
 	Metadata    map[string]any            `json:"metadata,omitempty"`
 }
 
-type UpdateTeamBodyObjectionHandlersItem struct {
+type UpdateTeamConfigBodyObjectionHandlersItem struct {
 	Objection string `json:"objection"`
 	Handler   string `json:"handler"`
 }
 
-type UpdateTeamBodyCompetitorsItem struct {
+type UpdateTeamConfigBodyCompetitorsItem struct {
 	Name       string  `json:"name"`
 	Weaknesses *string `json:"weaknesses,omitempty"`
 }
 
-type UpdateTeamBody struct {
-	Name                  *string                               `json:"name,omitempty"`
-	CompanyDescription    *string                               `json:"companyDescription,omitempty"`
-	ProductsServices      *string                               `json:"productsServices,omitempty"`
-	IdealCustomerProfile  *string                               `json:"idealCustomerProfile,omitempty"`
-	CommonObjections      []string                              `json:"commonObjections,omitempty"`
-	ToneGuidelines        *string                               `json:"toneGuidelines,omitempty"`
-	CustomPromptAdditions *string                               `json:"customPromptAdditions,omitempty"`
-	CoachingStyleID       *string                               `json:"coachingStyleId,omitempty"`
-	ObjectionHandlers     []UpdateTeamBodyObjectionHandlersItem `json:"objectionHandlers,omitempty"`
-	SetGoals              *string                               `json:"setGoals,omitempty"`
-	CloserGoals           *string                               `json:"closerGoals,omitempty"`
-	Competitors           []UpdateTeamBodyCompetitorsItem       `json:"competitors,omitempty"`
-	Industry              *string                               `json:"industry,omitempty"`
-	CrmBaseURL            *string                               `json:"crmBaseUrl,omitempty"`
+type UpdateTeamConfigBody struct {
+	Name                  *string                                     `json:"name,omitempty"`
+	CompanyDescription    *string                                     `json:"companyDescription,omitempty"`
+	ProductsServices      *string                                     `json:"productsServices,omitempty"`
+	IdealCustomerProfile  *string                                     `json:"idealCustomerProfile,omitempty"`
+	CommonObjections      []string                                    `json:"commonObjections,omitempty"`
+	ToneGuidelines        *string                                     `json:"toneGuidelines,omitempty"`
+	CustomPromptAdditions *string                                     `json:"customPromptAdditions,omitempty"`
+	CoachingStyleID       *string                                     `json:"coachingStyleId,omitempty"`
+	ObjectionHandlers     []UpdateTeamConfigBodyObjectionHandlersItem `json:"objectionHandlers,omitempty"`
+	SetGoals              *string                                     `json:"setGoals,omitempty"`
+	CloserGoals           *string                                     `json:"closerGoals,omitempty"`
+	Competitors           []UpdateTeamConfigBodyCompetitorsItem       `json:"competitors,omitempty"`
+	Industry              *string                                     `json:"industry,omitempty"`
+	CrmBaseURL            *string                                     `json:"crmBaseUrl,omitempty"`
 	// Write-only; stored encrypted
 	CrmSessionCookie *string `json:"crmSessionCookie,omitempty"`
 	SettingsLocked   *bool   `json:"settingsLocked,omitempty"`
@@ -663,8 +663,8 @@ func (p *GetAnalyticsOverviewParams) values() url.Values {
 	return q
 }
 
-// GetAnalyticsUsersParams are the query parameters of GetAnalyticsUsers.
-type GetAnalyticsUsersParams struct {
+// GetAnalyticsByMemberParams are the query parameters of GetAnalyticsByMember.
+type GetAnalyticsByMemberParams struct {
 	// One of: 7d, 30d, 90d.
 	Period *string
 	// Single local day (YYYY-MM-DD); returns 15-minute buckets
@@ -673,7 +673,7 @@ type GetAnalyticsUsersParams struct {
 	Tz *int
 }
 
-func (p *GetAnalyticsUsersParams) values() url.Values {
+func (p *GetAnalyticsByMemberParams) values() url.Values {
 	q := url.Values{}
 	if p == nil {
 		return q
@@ -858,9 +858,9 @@ func (c *Client) GetAnalyticsOverview(ctx context.Context, params *GetAnalyticsO
 	return &out, nil
 }
 
-// GetAnalyticsUsers calls GET /v1/analytics/users: Per-member call stats.
+// GetAnalyticsByMember calls GET /v1/analytics/users: Per-member call stats.
 // Requires scope `analytics:read`.
-func (c *Client) GetAnalyticsUsers(ctx context.Context, params *GetAnalyticsUsersParams, opts ...RequestOption) (*AnalyticsUsers, error) {
+func (c *Client) GetAnalyticsByMember(ctx context.Context, params *GetAnalyticsByMemberParams, opts ...RequestOption) (*AnalyticsUsers, error) {
 	var out AnalyticsUsers
 	if err := c.do(ctx, "GET", "/v1/analytics/users", params.values(), nil, &out, opts); err != nil {
 		return nil, err
@@ -930,9 +930,9 @@ func (c *Client) UpdateLead(ctx context.Context, id string, body *UpdateLeadBody
 	return &out, nil
 }
 
-// GetTeam calls GET /v1/team: Team settings and coaching context.
+// GetTeamConfig calls GET /v1/team: Team settings and coaching context.
 // Requires scope `team:read`.
-func (c *Client) GetTeam(ctx context.Context, opts ...RequestOption) (*TeamConfig, error) {
+func (c *Client) GetTeamConfig(ctx context.Context, opts ...RequestOption) (*TeamConfig, error) {
 	var out TeamConfig
 	if err := c.do(ctx, "GET", "/v1/team", nil, nil, &out, opts); err != nil {
 		return nil, err
@@ -940,9 +940,9 @@ func (c *Client) GetTeam(ctx context.Context, opts ...RequestOption) (*TeamConfi
 	return &out, nil
 }
 
-// UpdateTeam calls PATCH /v1/team: Update team settings.
+// UpdateTeamConfig calls PATCH /v1/team: Update team settings.
 // Requires scope `team:write`.
-func (c *Client) UpdateTeam(ctx context.Context, body *UpdateTeamBody, opts ...RequestOption) (*TeamConfig, error) {
+func (c *Client) UpdateTeamConfig(ctx context.Context, body *UpdateTeamConfigBody, opts ...RequestOption) (*TeamConfig, error) {
 	var out TeamConfig
 	if err := c.do(ctx, "PATCH", "/v1/team", nil, body, &out, opts); err != nil {
 		return nil, err
@@ -1033,9 +1033,9 @@ func (c *Client) UpdateCoachingStyle(ctx context.Context, id string, body *Updat
 	return &out, nil
 }
 
-// GetSubscription calls GET /v1/billing/subscription: Plan and subscription status.
+// GetBillingStatus calls GET /v1/billing/subscription: Plan and subscription status.
 // Requires scope `billing:read`.
-func (c *Client) GetSubscription(ctx context.Context, opts ...RequestOption) (*BillingStatus, error) {
+func (c *Client) GetBillingStatus(ctx context.Context, opts ...RequestOption) (*BillingStatus, error) {
 	var out BillingStatus
 	if err := c.do(ctx, "GET", "/v1/billing/subscription", nil, nil, &out, opts); err != nil {
 		return nil, err
@@ -1053,9 +1053,9 @@ func (c *Client) GetUsage(ctx context.Context, opts ...RequestOption) (*Usage, e
 	return &out, nil
 }
 
-// GetMemberUsage calls GET /v1/billing/usage/members: Per-member usage for the current period.
+// ListMemberUsage calls GET /v1/billing/usage/members: Per-member usage for the current period.
 // Requires scope `billing:read`.
-func (c *Client) GetMemberUsage(ctx context.Context, opts ...RequestOption) (*Page[MemberUsage], error) {
+func (c *Client) ListMemberUsage(ctx context.Context, opts ...RequestOption) (*Page[MemberUsage], error) {
 	var out Page[MemberUsage]
 	if err := c.do(ctx, "GET", "/v1/billing/usage/members", nil, nil, &out, opts); err != nil {
 		return nil, err
@@ -1063,9 +1063,9 @@ func (c *Client) GetMemberUsage(ctx context.Context, opts ...RequestOption) (*Pa
 	return &out, nil
 }
 
-// GetReferrals calls GET /v1/referrals: Referral link and stats.
+// GetReferralStats calls GET /v1/referrals: Referral link and stats.
 // Requires scope `referrals:read`.
-func (c *Client) GetReferrals(ctx context.Context, opts ...RequestOption) (*Referrals, error) {
+func (c *Client) GetReferralStats(ctx context.Context, opts ...RequestOption) (*Referrals, error) {
 	var out Referrals
 	if err := c.do(ctx, "GET", "/v1/referrals", nil, nil, &out, opts); err != nil {
 		return nil, err
